@@ -5,8 +5,8 @@
 #include "envoy/grpc/async_client_manager.h"
 #include "envoy/local_info/local_info.h"
 
-#include "common/grpc/typed_async_client.h"
 #include "common/config/utility.h"
+#include "common/grpc/typed_async_client.h"
 
 const char GRPC_LOG_STATS_PREFIX[] = "access_logs.grpc_access_log.";
 
