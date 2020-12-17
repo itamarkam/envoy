@@ -2,13 +2,11 @@
 
 #include "envoy/data/accesslog/v3/accesslog.pb.h"
 #include "envoy/extensions/access_loggers/grpc/v3/als.pb.h"
-#include "envoy/upstream/upstream.h"
+#include "envoy/grpc/async_client_manager.h"
+#include "envoy/local_info/local_info.h"
 
-#include "common/common/assert.h"
-#include "common/config/utility.h"
 #include "common/grpc/typed_async_client.h"
-#include "common/network/utility.h"
-#include "common/stream_info/utility.h"
+#include "common/config/utility.h"
 
 const char GRPC_LOG_STATS_PREFIX[] = "access_logs.grpc_access_log.";
 

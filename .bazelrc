@@ -18,16 +18,6 @@ build --action_env=BAZEL_LINKOPTS=-lm
 build --host_javabase=@bazel_tools//tools/jdk:remote_jdk11
 build --javabase=@bazel_tools//tools/jdk:remote_jdk11
 build --enable_platform_specific_config
-build --google_credentials=/home/itamark/.config/gcloud/application_default_credentials.json
-
-# GCP remote cache
-build:remote --remote_instance_name=projects/envoy-rbe/instances/default_instance
-build:remote --remote_cache=grpcs://remotebuildexecution.googleapis.com
-
-# GCP remote execution
-build:remote --remote_executor=grpcs://remotebuildexecution.googleapis.com
-build:remote --jobs=200
-build:remote --config=rbe-toolchain-clang-libc++
 
 # Enable position independent code (this is the default on macOS and Windows)
 # (Workaround for https://github.com/bazelbuild/rules_foreign_cc/issues/421)

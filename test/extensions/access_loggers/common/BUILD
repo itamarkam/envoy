@@ -22,8 +22,8 @@ envoy_cc_test(
     name = "grpc_access_logger_test",
     srcs = ["grpc_access_logger_test.cc"],
     deps = [
+        "//source/common/protobuf",
         "//source/extensions/access_loggers/common:grpc_access_logger",
-        "//source/extensions/access_loggers/grpc:http_grpc_access_log_lib",  # remove
         "//test/mocks/access_log:access_log_mocks",
         "//test/mocks/grpc:grpc_mocks",
         "//test/mocks/ssl:ssl_mocks",

@@ -6,21 +6,15 @@
 #include "envoy/service/accesslog/v3/als.pb.h"
 
 #include "common/buffer/zero_copy_input_stream_impl.h"
-#include "common/network/address_impl.h"
 
 #include "extensions/access_loggers/grpc/http_grpc_access_log_impl.h"
 
-#include "test/mocks/access_log/mocks.h"
 #include "test/mocks/grpc/mocks.h"
 #include "test/mocks/local_info/mocks.h"
-#include "test/mocks/ssl/mocks.h"
-#include "test/mocks/stream_info/mocks.h"
+#include "test/mocks/stats/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
-#include "test/test_common/test_runtime.h"
 
 using testing::_;
-using testing::AnyNumber;
-using testing::InSequence;
 using testing::Invoke;
 using testing::NiceMock;
 using testing::Return;
@@ -78,13 +72,12 @@ public:
         grpc_access_logger_impl_test_helper_(local_info_, async_client_) {
     EXPECT_CALL(*timer_, enableTimer(_, _));
     logger_ = std::make_unique<GrpcAccessLoggerImpl>(
-        Grpc::RawAsyncClientPtr{async_client_}, log_name_, FlushInterval, BUFFER_SIZE_BYTES,
+        Grpc::RawAsyncClientPtr{async_client_}, "test_log_name", FlushInterval, BUFFER_SIZE_BYTES,
         dispatcher_, local_info_, stats_store_, envoy::config::core::v3::ApiVersion::AUTO);
   }
 
   Grpc::MockAsyncClient* async_client_;
   Stats::IsolatedStoreImpl stats_store_;
-  std::string log_name_ = "test_log_name";
   LocalInfo::MockLocalInfo local_info_;
   Event::MockDispatcher dispatcher_;
   Event::MockTimer* timer_;
@@ -155,7 +148,7 @@ public:
   GrpcAccessLoggerImplTestHelper grpc_access_logger_impl_test_helper_;
 };
 
-// Test that the logger is created according to the config.
+// Test that the logger is created according to the config (by inspecting the generated log).
 TEST_F(GrpcAccessLoggerCacheImplTest, LoggerCreation) {
   envoy::extensions::access_loggers::grpc::v3::CommonGrpcAccessLogConfig config;
   config.set_log_name("test-log");
@@ -165,6 +158,7 @@ TEST_F(GrpcAccessLoggerCacheImplTest, LoggerCreation) {
 
   GrpcAccessLoggerSharedPtr logger =
       logger_cache_.getOrCreateLogger(config, Common::GrpcAccessLoggerType::HTTP, scope_);
+  // Note that the local info node() method is mocked, so the node is not really configurable.
   grpc_access_logger_impl_test_helper_.expectStreamMessage(R"EOF(
   identifier:
     node:

@@ -1,18 +1,16 @@
 #include <memory>
 
-#include "common/protobuf/protobuf.h" // Struct proto
-#include "extensions/access_loggers/common/grpc_access_logger.h"
-#include "common/grpc/typed_async_client.h"
-
 #include "envoy/config/core/v3/grpc_service.pb.h"
 #include "envoy/data/accesslog/v3/accesslog.pb.h"
 #include "envoy/extensions/access_loggers/grpc/v3/als.pb.h"
 #include "envoy/service/accesslog/v3/als.pb.h"
 
 #include "common/buffer/zero_copy_input_stream_impl.h"
+#include "common/grpc/typed_async_client.h"
 #include "common/network/address_impl.h"
+#include "common/protobuf/protobuf.h"
 
-#include "extensions/access_loggers/grpc/http_grpc_access_log_impl.h"
+#include "extensions/access_loggers/common/grpc_access_logger.h"
 
 #include "test/mocks/access_log/mocks.h"
 #include "test/mocks/grpc/mocks.h"
@@ -40,7 +38,8 @@ constexpr char MOCK_TCP_LOG_FIELD_NAME[] = "tcp_log_entry";
 constexpr auto TRANSPORT_API_VERSION = envoy::config::core::v3::ApiVersion::AUTO;
 
 const Protobuf::MethodDescriptor& mockMethodDescriptor() {
-  // TODO(itamarkam): replace with a generic API.
+  // The mock logger doesn't have its own API, but we only care about the method descriptor so we
+  // use the ALS protos.
   return Grpc::VersionedMethods("envoy.service.accesslog.v3.AccessLogService.StreamAccessLogs",
                                 "envoy.service.accesslog.v2.AccessLogService.StreamAccessLogs")
       .getMethodDescriptorForVersion(TRANSPORT_API_VERSION);
@@ -77,19 +76,22 @@ private:
   }
 
   // Extensions::AccessLoggers::GrpcCommon::GrpcAccessLogger
+  // For testing purposes, we don't really care how each of these virtual methods is implemented, as
+  // it's up to each logger implementation. We test whether they were called in the regular flow of
+  // logging or not. For example, we count how many entries were added, but don't add the log entry
+  // itself to the message.
   void addEntry(ProtobufWkt::Struct&& entry) override {
-    // We use a counter to simulate the number of entries added, so we don't use the entry itself.
     (void)entry;
     mockAddEntry(MOCK_HTTP_LOG_FIELD_NAME);
   }
 
   void addEntry(ProtobufWkt::Empty&& entry) override {
-    // We use a counter to simulate the number of entries added, so we don't use the entry itself.
     (void)entry;
     mockAddEntry(MOCK_TCP_LOG_FIELD_NAME);
   }
 
   bool isEmpty() override { return message_.fields().empty(); }
+
   void initMessage() override { ++num_inits; }
 
   int num_inits = 0;
@@ -100,7 +102,8 @@ public:
   using MockAccessLogStream = Grpc::MockAsyncStream;
   using AccessLogCallbacks = Grpc::AsyncStreamCallbacks<ProtobufWkt::Struct>;
 
-  // We log a non empty entry (even though not used) so that we can trigger buffering mechanisms.
+  // We log a non empty entry (even though not used) so that we can trigger buffering mechanisms,
+  // which are based on the entry size.
   ProtobufWkt::Struct mockHttpEntry() {
     ProtobufWkt::Struct entry;
     entry.mutable_fields()->insert({"test-key", ProtobufWkt::Value()});
@@ -148,7 +151,6 @@ public:
 
 // Test basic stream logging flow.
 TEST_F(GrpcAccessLogTest, BasicFlow) {
-  InSequence s;
   initLogger(FlushInterval, 0);
 
   // Start a stream for the first log.
@@ -234,7 +236,6 @@ TEST_F(GrpcAccessLogTest, WatermarksLegacy) {
   Runtime::LoaderSingleton::getExisting()->mergeValues(
       {{"envoy.reloadable_features.disallow_unbounded_access_logs", "false"}});
 
-  InSequence s;
   initLogger(FlushInterval, 1);
 
   // Start a stream for the first log.
@@ -267,7 +268,6 @@ TEST_F(GrpcAccessLogTest, WatermarksLegacy) {
 
 // Test that stream failure is handled correctly.
 TEST_F(GrpcAccessLogTest, StreamFailure) {
-  InSequence s;
   initLogger(FlushInterval, 0);
 
   EXPECT_CALL(*async_client_, startRaw(_, _, _, _))
@@ -283,7 +283,6 @@ TEST_F(GrpcAccessLogTest, StreamFailure) {
 
 // Test that log entries are batched.
 TEST_F(GrpcAccessLogTest, Batching) {
-  InSequence s;
   // The approximate log size for buffering is calculated based on each entry's byte size.
   const int max_buffer_size = 3 * mockHttpEntry().ByteSizeLong();
   initLogger(FlushInterval, max_buffer_size);
@@ -308,7 +307,6 @@ TEST_F(GrpcAccessLogTest, Batching) {
 
 // Test that log entries are flushed periodically.
 TEST_F(GrpcAccessLogTest, Flushing) {
-  InSequence s;
   initLogger(FlushInterval, 100);
 
   // Nothing to do yet.
@@ -379,7 +377,6 @@ public:
 
 TEST_F(GrpcAccessLoggerCacheTest, Deduplication) {
   Stats::IsolatedStoreImpl scope;
-  InSequence s;
 
   envoy::extensions::access_loggers::grpc::v3::CommonGrpcAccessLogConfig config;
   config.set_log_name("log-1");

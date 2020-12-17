@@ -1,20 +1,15 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 
 #include "envoy/data/accesslog/v3/accesslog.pb.h"
+#include "envoy/event/dispatcher.h"
 #include "envoy/extensions/access_loggers/grpc/v3/als.pb.h"
-#include "envoy/grpc/async_client.h"
 #include "envoy/grpc/async_client_manager.h"
 #include "envoy/local_info/local_info.h"
 #include "envoy/service/accesslog/v3/als.pb.h"
-#include "envoy/singleton/instance.h"
 #include "envoy/thread_local/thread_local.h"
 
-#include "common/grpc/typed_async_client.h"
-
-#include "extensions/access_loggers/common/access_log_base.h"
 #include "extensions/access_loggers/common/grpc_access_logger.h"
 
 namespace Envoy {
