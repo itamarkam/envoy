@@ -12,6 +12,7 @@
 #include "common/common/assert.h"
 #include "common/grpc/typed_async_client.h"
 #include "common/protobuf/utility.h"
+#include "common/runtime/runtime_features.h"
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/types/optional.h"
@@ -219,6 +220,7 @@ private:
   virtual void initMessage() PURE;
   virtual void addEntry(HttpLogProto&& entry) PURE;
   virtual void addEntry(TcpLogProto&& entry) PURE;
+  virtual void clearMessage() { message_.Clear(); }
 
   void flush() {
     if (isEmpty()) {
@@ -233,7 +235,7 @@ private:
     if (client_.log(message_)) {
       // Clear the message regardless of the success.
       approximate_message_size_bytes_ = 0;
-      message_.Clear();
+      clearMessage();
     }
   }
 
