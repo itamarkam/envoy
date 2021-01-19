@@ -73,11 +73,11 @@ private:
 /**
  * Aliases for class interfaces for mock definitions.
  */
-using GrpcAccessLogger = GrpcOpenTelemetryAccessLoggerImpl::Interface;
-using GrpcAccessLoggerSharedPtr = GrpcAccessLogger::SharedPtr;
+using GrpcOpenTelemetryAccessLogger = GrpcOpenTelemetryAccessLoggerImpl::Interface;
+using GrpcOpenTelemetryAccessLoggerSharedPtr = GrpcOpenTelemetryAccessLogger::SharedPtr;
 
-using GrpcAccessLoggerCache = GrpcOpenTelemetryAccessLoggerCacheImpl::Interface;
-using GrpcAccessLoggerCacheSharedPtr = GrpcAccessLoggerCache::SharedPtr;
+using GrpcOpenTelemetryAccessLoggerCache = GrpcOpenTelemetryAccessLoggerCacheImpl::Interface;
+using GrpcOpenTelemetryAccessLoggerCacheSharedPtr = GrpcOpenTelemetryAccessLoggerCache::SharedPtr;
 
 } // namespace GrpcCommon
 } // namespace AccessLoggers
