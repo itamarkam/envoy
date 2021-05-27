@@ -1145,9 +1145,15 @@ MetadataFormatter::formatMetadata(const envoy::config::core::v3::Metadata& metad
     return absl::nullopt;
   }
 
-  std::string json = MessageUtil::getJsonStringFromMessageOrDie(value, false, true);
-  truncate(json, max_length_);
-  return json;
+  std::string str;
+  if (value.kind_case() == ProtobufWkt::Value::kStringValue) {
+    fmt::print("iitamark - value:\n\n{}\n\n", value.string_value());
+    str = value.string_value();
+  } else {
+    val = MessageUtil::getJsonStringFromMessageOrDie(value, false, true);
+  }
+  truncate(val, max_length_);
+  return val;
 }
 
 ProtobufWkt::Value
